@@ -5,7 +5,39 @@ driver or have not been fixed yet. If you hit something that is not listed
 here, it is worth reporting.
 
 
-## Audio: clicks or brief repeats
+## 48kHz audio behind a high-speed hub depends on the hub
+
+At 48kHz each USB audio packet is too big to cross a high-speed hub's
+transaction translator in one piece, so it is sent in two parts that the hub
+has to join back together. Some hubs cannot do this and drop the packet - you
+hear constant clicks or gaps. A hub with a Terminus 1A40:0101 chip handles it;
+one with a 214B:7260 chip does not.
+
+**44.1kHz is sent in one piece and works through every hub tested.** Most
+music is 44.1kHz anyway, so setting the AHI mode to 44100 Hz is both the fix
+and the better choice: it also spares AHI converting the rate in software.
+
+Directly on the Pi's port, or behind a hub running at full speed, both rates
+work.
+
+
+## No recording behind a high-speed hub
+
+A sound card's microphone (recording) cannot be used while the card is behind
+a high-speed hub. Playback is not affected. Recording would need a second kind
+of split transfer every millisecond, which this driver does not do. It works
+with the card directly on the Pi's port or behind a full-speed hub.
+
+
+## Audio behind a high-speed hub uses more CPU
+
+Behind a high-speed hub the driver has to handle eight times as many USB timing
+interrupts as with the sound card directly on the port. On a Pi Zero 2 that is
+a noticeable share of the machine while audio plays. It has no effect on the
+sound, but other programs get less CPU in the meantime.
+
+
+## Audio: clicks when the machine is very busy
 
 ### How to tell what you are hearing
 
@@ -22,50 +54,24 @@ The lines starting `iso` tell you where a fault is:
 | line | what it counts | whose |
 |---|---|---|
 | `iso gaps ... 4+:N` | frames the driver failed to send | this driver - should be 0 |
-| `iso sof ... missed N` | USB frame clock ticks that never arrived | this driver - should be 0 |
-| `iso reload ... replays:N` | audio usbaudio.class sent twice | the class, not this driver |
+| `iso sof ... missed N` | USB frame clock ticks that never arrived | this driver - should be close to 0 |
+| `iso reload ... replays:N` | audio usbaudio.class sent twice | AHI and the class, not this driver |
 
-### The known cause: usbaudio.class replaying audio
+A `replays` count of 1 is normal: it is the very start of playback.
 
-`usbaudio.class`, the Poseidon class that feeds the driver its audio, keeps two
-buffers. When one runs out it asks AHI to mix the next one and then, in the same
-breath, reads the variable that says which buffer to play from - a variable
-only updated once the mixing has finished. If the mixing has not finished, the
-class hands back the buffer it has just played and replays all of it, about 19
-milliseconds you have already heard. You hear a click and a short repeat. The
-class never reports this, which is why it is invisible to every "is the audio
-starving?" check - hence the `replays` counter.
+### Replays: AHI protecting the machine
 
-**How common it is depends on how busy the machine is.** On a tester's machine
-it did not happen once, in any run of either player. It becomes more common
-when other programs keep the CPU busy, because that delays AHI's mixing. It
-is the same in every Poseidon version.
+AHI has a **CPU usage limit** (in AHI prefs, Advanced settings). When the
+machine is too busy, AHI skips mixing a buffer rather than let audio take over
+the system, and `usbaudio.class` then sends the previous buffer again - about
+20 milliseconds you have already heard. You hear a click and a short repeat.
 
-**What helps if you do see replays climbing:**
+**What helps:**
 
-- **Match the AHI mode's sample rate to what you are playing.** Playing 44.1kHz
-  material through a 48kHz mode makes AHI resample every buffer in software on
-  the 68k, for nothing.
-- **Close other programs that keep the CPU busy** while you listen.
+- **Close anything that keeps the CPU busy** while you listen.
+- **Match the AHI mode's frequency to what you are playing.** Playing 44.1kHz
+  material through a 48kHz mode makes AHI convert every buffer in software.
 - **Use a lighter player.**
-
-**Why this driver does not paper over it.** It could detect a replay and send
-silence instead, turning the click into a soft dropout. It deliberately does
-not: a host controller driver's job is to carry the class's audio faithfully,
-no other USB driver on this stack alters audio, and it would still leave 19
-milliseconds of repeated or missing sound. The fix belongs in the class.
-
-
-## Isochronous is refused behind a high-speed hub
-
-Audio will not start if the sound card is behind a **high-speed** USB 2.0 hub.
-It is accepted directly on the port, and also behind a hub that comes up at
-**full speed** - Poseidon's device list shows which, and many cheap "USB 2.0"
-hubs report Full.
-
-A high-speed hub puts a transaction translator in the path, which requires
-split isochronous transfers. Those are not implemented. On a one-port machine
-this means audio and other devices cannot currently share a high-speed hub.
 
 
 ## Low-speed devices are refused behind a full-speed hub on the Pi
@@ -82,11 +88,67 @@ USB bus down until replug, so this driver refuses it instead.
 Low-speed devices work directly on the Pi's port, and anywhere below a
 **high-speed** hub plugged into the Pi - even behind a second, full-speed hub
 further down - because the high-speed hub's transaction translator does the
-low-speed signalling.
+low-speed signalling. Since audio now works behind a high-speed hub too, that
+is the kind of hub to use for a sound card plus keyboard and mouse.
 
-Note that a full-speed hub is also the kind that lets USB audio work behind
-it (see above), so a sound card and a low-speed mouse cannot currently share
-one.
+
+## The mouse can be less smooth behind a hub during heavy copying
+
+With a mouse and a USB drive behind the same hub, a long file copy can make
+the pointer slightly less smooth. Low- and full-speed devices behind a
+high-speed hub need precisely timed transfers that the driver has to wait for,
+and heavy disk traffic on the same hub makes those waits longer. Directly on
+the port, or with no copy running, it is smooth.
+
+
+## Audio gaps for the first window drag on some systems
+
+On some setups (CaffeineOS, for example) dragging a window stops all programs
+from running for up to about an eighth of a second. The driver notices the
+first time this nearly starves the audio, and from then on keeps more audio
+queued ahead (up to 128 milliseconds) for the rest of the session. So you may
+hear one or two gaps on the first drags after starting the driver, and then no
+more. Machines that never stall like this keep the normal, lower latency.
+
+
+## Devices resetting on a bus-powered hub
+
+With a hub that takes its power from the Pi's USB port, plugging in or pulling
+out a USB stick can briefly drop the power to everything else on the hub. A
+device that browns out like this resets itself: a mouse stops responding until
+Poseidon notices and restarts its port a few seconds later, and in a bad case a
+USB stick drops out mid-transfer. The driver reports the errors correctly and
+nothing is corrupted, but it is not pleasant.
+
+**Use a powered hub (one with its own power supply) when you connect more than
+one or two devices**, and especially for USB sticks.
+
+
+## A device misbehaving on its first connection
+
+Occasionally a device fails its first connection: it is not detected, it is
+refused, or a fast USB stick comes up at the slow full speed (Poseidon's device
+list shows the speed). Unplugging it and plugging it back in - or into another
+port on the hub - fixes it. This is the device and its connection, not the
+driver; the same plug-in a second time is handled normally.
+
+
+## Not this driver: unplugging a USB sound card while it is playing
+
+Pulling out a USB sound card mid-playback leaves the player unable to quit, and
+the hub it was plugged into stops noticing new devices, until you reboot. This
+is a lock-up between Poseidon's hub and audio classes while the card is being
+removed; the USB driver keeps working (other devices on the same hub carry on).
+**Quit the player before unplugging the sound card.**
+
+
+## Not this driver: harsh, distorted sound with a high channel count in AHI
+
+If AHI prefs give the USB audio mode many **Channels** (CaffeineOS defaults to
+16) with Volume and Gain at 0 dB, single sounds can come out many times too
+loud and clip into a harsh buzz. Set the USB mode to **1 channel** (or a few)
+and lower Volume and Gain, for example to -20 dB. Music players like AmigaAMP
+use their own channels and are not affected by this setting.
 
 
 ## Not this driver: duplicate drive numbers on eject or media change
