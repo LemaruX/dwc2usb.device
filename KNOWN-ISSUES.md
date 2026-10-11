@@ -9,13 +9,15 @@ here, it is worth reporting.
 
 At 48kHz each USB audio packet is too big to cross a high-speed hub's
 transaction translator in one piece, so it is sent in two parts that the hub
-has to join back together. Some hubs cannot do this and drop the packet - you
-hear constant clicks or gaps. A hub with a Terminus 1A40:0101 chip handles it;
-one with a 214B:7260 chip does not.
+has to join back together. Version 0.3 sends those parts at the moments Linux
+and other USB controllers use, and both hubs tested here now play 48kHz
+cleanly (Terminus 1A40:0101 and 214B:7260 chips; in 0.2 the 214B clicked).
+A hub that still struggles is likely to exist, though.
 
-**44.1kHz is sent in one piece and works through every hub tested.** Most
-music is 44.1kHz anyway, so setting the AHI mode to 44100 Hz is both the fix
-and the better choice: it also spares AHI converting the rate in software.
+**If you hear constant clicks or gaps at 48kHz behind a hub, set the AHI mode
+to 44100 Hz.** 44.1kHz is sent in one piece, which every hub handles more
+easily. Most music is 44.1kHz anyway, so it is usually the better choice: it
+also spares AHI converting the rate in software.
 
 Directly on the Pi's port, or behind a hub running at full speed, both rates
 work.
@@ -43,13 +45,10 @@ sound, but other programs get less CPU in the meantime.
 
 Play something for a minute or two, **quit the player completely** (some
 players keep the audio open while stopped, and the figures are only written
-when it closes), then run:
+when it closes), then double-click **Dwc2Report** (or run
+`Dwc2Diag DEVS:USBHardware/dwc2usb.device LOG` in a shell).
 
-```
-Dwc2Diag DEVS:USBHardware/dwc2usb.device LOG
-```
-
-The lines starting `iso` tell you where a fault is:
+In the file it saves, the lines starting `iso` tell you where a fault is:
 
 | line | what it counts | whose |
 |---|---|---|
@@ -109,6 +108,36 @@ first time this nearly starves the audio, and from then on keeps more audio
 queued ahead (up to 128 milliseconds) for the rest of the session. So you may
 hear one or two gaps on the first drags after starting the driver, and then no
 more. Machines that never stall like this keep the normal, lower latency.
+
+
+## Some hubs lose audio, or upset mice and keyboards
+
+Sound cards, mice and keyboards are slower USB devices. Behind a high-speed hub
+their traffic goes through a part of the hub called the transaction
+translator, and some hubs' translators do not cope: the hub accepts the data
+and then fails to pass it on. Audio crackles and stutters badly (sometimes
+with crackling that carries on for a moment after you stop playback), or a
+mouse pointer suddenly races off across the screen. The driver cannot see this
+happening, so its log looks normal.
+
+It depends on the exact hub chip, not just the maker. Two hubs with
+**Genesys Logic** chips show both sides:
+
+| hub chip (Poseidon's device list shows it) | result |
+|---|---|
+| Genesys 05E3:**0610**, named "USB2.1 Hub" | audio unusable, mouse goes wild |
+| Genesys 05E3:**0608**, named "USB2.0 Hub" (e.g. a D-Link 7-port hub) | works well |
+
+Poseidon 4.5 may warn that Genesys hubs are broken; as the table shows, that
+is true of some and not of others.
+
+Hubs that name themselves "USB2.1 Hub" are usually the USB 2 side of a **USB 3
+hub**, and these seem to be the ones that struggle. **For a sound card, mouse
+or keyboard, a plain USB 2.0 hub is the safest choice.** If a device misbehaves
+behind a hub but works plugged straight into the Pi, try a different hub.
+
+(A 7-port hub showing up in Trident as two hubs is normal: it is two 4-port
+hub chips chained inside one box.)
 
 
 ## Devices resetting on a bus-powered hub

@@ -5,34 +5,41 @@ A USB host controller driver for **Poseidon**, for Amigas accelerated by a
 Pi 3A+). It drives the Pi's own USB port, the Synopsys DWC2 controller, so
 Poseidon can use keyboards, mice, hubs, mass storage and USB audio through it.
 
-**Version 0.2, build 1435. This is a test release.** It works well on the
+**Version 0.3, build 1417. This is a test release.** It works well on the
 machines it has been tested on, but it has not seen many setups yet. Reports
 are welcome: see [Reporting a problem](#reporting-a-problem).
 
 Pi 4 / CM4 users do not need this: use the Emu68 xHCI driver instead.
 
 
-## What's new in 0.2
+## What's new in 0.3
 
-- **USB audio now works behind a high-speed USB 2.0 hub**, so a sound card can
-  share the Pi's single port with a keyboard, a mouse and a USB stick. 44.1kHz
-  works through any hub; 48kHz needs a hub that handles it (see Known issues).
-- **Cleaner audio**: the clicks and short repeats some people heard in 0.1 are
+- **Cleaner audio through high-speed hubs.** The driver now sends audio to a
+  hub at the same point in each USB frame as Linux and other USB controllers
+  do. Hubs that crackled or clicked before, at 48kHz in particular, can now
+  play cleanly.
+- Fixed a rare case where an audio packet was sent to a hub at a moment the
+  USB specification does not allow, which could cause an occasional click.
+- **New: Dwc2Report, a one-click problem report.** Double-click it straight
+  after something goes wrong and it gathers everything needed into one file in
+  RAM:, named by date and time. See [Reporting a problem](#reporting-a-problem).
+
+Otherwise nothing has changed since 0.2: keyboards, mice and USB drives behave
+exactly as before.
+
+
+## What was new in 0.2
+
+- USB audio behind a high-speed USB 2.0 hub, so a sound card can share the
+  Pi's single port with a keyboard, a mouse and a USB stick.
+- Cleaner audio: the clicks and short repeats some people heard in 0.1 are
   fixed, as are dropouts with players that run at a high priority.
-- **Audio survives system stalls**: on setups where dragging a window briefly
-  freezes everything (CaffeineOS, for example), the driver now notices and
-  keeps more audio queued, by itself, so the sound no longer breaks up.
-- **Sturdier with USB drives**: tested with three different USB sticks -
-  several gigabytes written and read back, every byte checked, including two
-  and three sticks in use at once and a stick pulled out in the middle of
-  writing. A fault where a stick dropping out at the wrong moment could freeze
-  USB until a reboot is fixed.
-- **Safe across a reset**: the USB controller is now stopped cleanly on
-  Ctrl-Amiga-Amiga or a software reboot, so it cannot keep running into the
-  restarting system.
-- Better recovery when a full- or low-speed device behind a hub hits an error.
-- `Dwc2Diag` run without a mode now prints its usage instead of running a
-  development test.
+- Audio survives system stalls (CaffeineOS window drags, for example) by
+  keeping more audio queued when it is needed.
+- Sturdier with USB drives, tested with several gigabytes written and read
+  back, every byte checked; a stick dropping out at the wrong moment no longer
+  freezes USB.
+- The USB controller is stopped cleanly on a reset.
 
 
 ## What works
@@ -56,10 +63,10 @@ Pi 4 / CM4 users do not need this: use the Emu68 xHCI driver instead.
 | Emu68 | 1.0.7 |
 | AmigaOS | 3.2 |
 | Poseidon | 4.5 and 6.1 |
-| Devices | SanDisk Cruzer Fit, Lexar and Kingston DataTraveler 3.0 USB sticks, Logitech USB mouse, IBM USB keyboard with TrackPoint, two different USB sound cards, a USB CD-ROM, USB 2.0 hubs with Terminus (1A40:0101) and 214B:7260 chips |
+| Devices | SanDisk Cruzer Fit, Lexar and Kingston DataTraveler 3.0 USB sticks, Logitech USB mouse, IBM USB keyboard with TrackPoint, two different USB sound cards, a USB CD-ROM, USB 2.0 hubs with Terminus (1A40:0101), 214B:7260 and Genesys (05E3:0608) chips |
 
 The Pi 3B and 3B+ have not been tested. Their ports sit behind an onboard
-high-speed hub, which this release now supports for audio as well.
+high-speed hub, which this driver supports for audio as well.
 
 
 ## Requirements
@@ -83,7 +90,8 @@ run the same controller.
 ## Installing
 
 1. Copy `Devs/USBHardware/dwc2usb.device` to `DEVS:USBHardware/`.
-2. Copy `C/Dwc2Diag` to `C:` (optional, but needed to report problems).
+2. Copy `C/Dwc2Diag` to `C:`, and `Dwc2Report` with its icon anywhere you
+   like (the Workbench, for example). Both are only needed to report problems.
 3. Open **Trident**, go to the **Hardware** page, add a new entry, pick
    `DEVS:USBHardware/dwc2usb.device`, unit **0**, and bring it online.
    Save the settings if you want it started at every boot.
@@ -97,7 +105,7 @@ AddUSBClasses
 
 The root hub shows up in Poseidon as **DWC2 Hub**.
 
-Upgrading from 0.1: replace the file and reboot.
+Upgrading from an earlier version: replace the file and reboot.
 
 **For audio**, open `SYS:Prefs/AHI` after the sound card has been detected,
 choose the USB audio mode for the unit you want, and click **Use**. The mode
@@ -117,10 +125,9 @@ Dwc2Diag DEVS:USBHardware/dwc2usb.device PROBE
 The full list, with explanations, is in [KNOWN-ISSUES.md](KNOWN-ISSUES.md).
 In short:
 
-- **48kHz audio behind a high-speed hub depends on the hub.** Some hubs cannot
-  pass it and you will hear constant clicks; 44.1kHz works through all of
-  them. Recording (a sound card's microphone) is not supported behind a
-  high-speed hub.
+- **Some hubs cannot pass 48kHz audio cleanly.** If you hear constant clicks
+  at 48kHz behind a hub, use 44.1kHz. Recording (a sound card's microphone)
+  is not supported behind a high-speed hub.
 - **Audio behind a high-speed hub uses more CPU** than with the sound card
   directly on the port.
 - **Low-speed devices (many keyboards and mice) are refused if the hub
@@ -131,6 +138,10 @@ In short:
   and what helps.
 - **The mouse can be slightly less smooth behind a hub during heavy file
   copying** to a USB drive on the same hub.
+- **Some hubs lose audio or upset mice and keyboards**, while others with the
+  same maker's chips work fine (for example, a Genesys "USB2.1 Hub" fails
+  where a Genesys "USB2.0 Hub" works). A plain USB 2.0 hub is the safest
+  choice for a sound card, mouse or keyboard.
 - **A device that misbehaves on its first connection** (not found, refused,
   or running slowly) usually just needs unplugging and plugging in again.
 - **Duplicate drive numbers after eject or media change** (`UCD0`, `UCD1`...)
@@ -139,26 +150,39 @@ In short:
 
 ## Reporting a problem
 
-Please open an issue on this repository and include:
+Straight after the problem happens, **double-click `Dwc2Report`**, once. It
+collects the driver build, the driver's log, the last mouse/keyboard reports,
+Poseidon's device list and Poseidon's message log into one file, and shows a
+window telling you its name, for example `RAM:dwc2report-11-Oct-26_10.42.13.txt`.
 
-1. The build number, from `Dwc2Diag DEVS:USBHardware/dwc2usb.device PROBE`.
-2. Your Pi model, Emu68 version, AmigaOS version and Poseidon version.
-3. What is plugged in and how: directly, or through which hub. The output of
-   `PsdDevlister` is ideal.
-4. What you did, what you expected and what happened instead.
-5. The driver's own log, captured straight after the problem:
+Then open an issue on this repository, attach that file, and say:
 
-   ```
-   Dwc2Diag DEVS:USBHardware/dwc2usb.device LOG >RAM:dwc2log.txt
-   ```
+1. Your Pi model, Emu68 version, AmigaOS version and Poseidon version.
+2. What is plugged in and how: directly, or through which hub, and whether the
+   hub has its own power supply.
+3. What you did, what you expected and what happened instead.
 
-   For audio problems, **quit the player completely first**. Some players
-   keep the audio open while stopped, and the audio figures are only written
-   when it closes.
+Good to know:
 
-**Only use `PROBE`, `LOG` and `TRACE` with Dwc2Diag.** Its other modes are
+- **Run it once, right after the problem.** Reading Poseidon's message log
+  empties it, so a second run has nothing to show there.
+- For audio problems, **quit the player completely first**. Some players keep
+  the audio open while stopped, and the audio figures are only written when it
+  closes.
+- From a shell, `Execute Dwc2Report` does the same. It finds Dwc2Diag in `C:`,
+  next to itself, or in the archive's `C` folder.
+
+If you prefer to do it by hand, these Dwc2Diag modes only read and are safe
+while Poseidon is running:
+
+```
+Dwc2Diag DEVS:USBHardware/dwc2usb.device PROBE
+Dwc2Diag DEVS:USBHardware/dwc2usb.device LOG >RAM:dwc2log.txt
+Dwc2Diag DEVS:USBHardware/dwc2usb.device TRACE >RAM:dwc2trace.txt
+```
+
+**Only use `PROBE`, `LOG` and `TRACE`.** Dwc2Diag's other modes are
 development tests, and some of them reset the USB port or disturb Poseidon.
-These three only read, and are safe while Poseidon is running.
 
 
 ## Author
