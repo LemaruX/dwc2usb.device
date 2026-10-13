@@ -5,27 +5,41 @@ A USB host controller driver for **Poseidon**, for Amigas accelerated by a
 Pi 3A+). It drives the Pi's own USB port, the Synopsys DWC2 controller, so
 Poseidon can use keyboards, mice, hubs, mass storage and USB audio through it.
 
-**Version 0.3, build 1417. This is a test release.** It works well on the
+**Version 0.4, build 1605. This is a test release.** It works well on the
 machines it has been tested on, but it has not seen many setups yet. Reports
 are welcome: see [Reporting a problem](#reporting-a-problem).
 
 Pi 4 / CM4 users do not need this: use the Emu68 xHCI driver instead.
 
 
-## What's new in 0.3
+## What's new in 0.4
 
-- **Cleaner audio through high-speed hubs.** The driver now sends audio to a
-  hub at the same point in each USB frame as Linux and other USB controllers
-  do. Hubs that crackled or clicked before, at 48kHz in particular, can now
-  play cleanly.
-- Fixed a rare case where an audio packet was sent to a hub at a moment the
-  USB specification does not allow, which could cause an occasional click.
-- **New: Dwc2Report, a one-click problem report.** Double-click it straight
-  after something goes wrong and it gathers everything needed into one file in
-  RAM:, named by date and time. See [Reporting a problem](#reporting-a-problem).
+- **Smoother mice and keyboards behind a hub while audio plays.** Each device
+  behind a hub now gets its own moment in the USB frame instead of competing
+  for the same one, so far fewer of their reports are lost.
+- **No more freezes from busy hub devices.** Devices behind a hub that asked to
+  be checked every 1-2ms could take over the whole machine. Devices behind a
+  hub are now checked at most every 8ms, and the time the driver spends on
+  them is capped. Devices plugged straight into the Pi are not affected.
+- **One slow device no longer holds up the others.** Setup requests to a
+  device now run in the background, so a device that is slow to answer no
+  longer stalls every other USB device meanwhile.
+- **Unplugging a hub is handled much faster.** A device plugged in straight
+  afterwards appears in well under a second instead of 30 seconds or more.
+- **Poseidon 6.2 power saving works on the Pi's port**: suspend and resume,
+  and no more "Remote wakeup feature for 'DWC2 Hub' could not be enabled".
+- More robust error handling, following the USB specification and Linux.
 
-Otherwise nothing has changed since 0.2: keyboards, mice and USB drives behave
-exactly as before.
+Audio, USB drives and devices plugged straight into the Pi otherwise behave as
+in 0.3.
+
+
+## What was new in 0.3
+
+- Cleaner audio through high-speed hubs, especially at 48kHz: audio is sent
+  to a hub at the same point in each USB frame as Linux does.
+- **Dwc2Report, a one-click problem report.** See
+  [Reporting a problem](#reporting-a-problem).
 
 
 ## What was new in 0.2
@@ -62,8 +76,8 @@ exactly as before.
 | Pi boards | Pi Zero 2 W, Pi 3A+ |
 | Emu68 | 1.0.7 |
 | AmigaOS | 3.2 |
-| Poseidon | 4.5 and 6.1 |
-| Devices | SanDisk Cruzer Fit, Lexar and Kingston DataTraveler 3.0 USB sticks, Logitech USB mouse, IBM USB keyboard with TrackPoint, two different USB sound cards, a USB CD-ROM, USB 2.0 hubs with Terminus (1A40:0101), 214B:7260 and Genesys (05E3:0608) chips |
+| Poseidon | 4.5, 6.1 and 6.2 |
+| Devices | SanDisk Cruzer Fit, Lexar and Kingston DataTraveler 3.0 USB sticks, Logitech USB mouse, Logitech Unifying receiver (K400 keyboard), IBM USB keyboard with TrackPoint, two different USB sound cards, a USB CD-ROM, USB 2.0 hubs with Terminus (1A40:0101), 214B:7260 and Genesys (05E3:0608) chips |
 
 The Pi 3B and 3B+ have not been tested. Their ports sit behind an onboard
 high-speed hub, which this driver supports for audio as well.
@@ -136,12 +150,18 @@ In short:
 - **Clicks in audio when the machine is very busy** can come from AHI holding
   back its mixing to protect the system. KNOWN-ISSUES.md explains how to tell,
   and what helps.
+- **Devices behind a hub are checked at most every 8ms.** Fine for mice and
+  keyboards; a device that needs faster polling works better plugged straight
+  into the Pi.
 - **The mouse can be slightly less smooth behind a hub during heavy file
   copying** to a USB drive on the same hub.
 - **Some hubs lose audio or upset mice and keyboards**, while others with the
   same maker's chips work fine (for example, a Genesys "USB2.1 Hub" fails
-  where a Genesys "USB2.0 Hub" works). A plain USB 2.0 hub is the safest
-  choice for a sound card, mouse or keyboard.
+  where a Genesys "USB2.0 Hub" works), and one user's machine froze with a
+  sound card and a mouse on a Genesys "USB2.1 Hub". A plain USB 2.0 hub is
+  the safest choice for a sound card, mouse or keyboard.
+- **FAT-formatted USB sticks are slower under Poseidon 6.x than under 4.5.** That is in
+  Poseidon's mounter, not this driver, and has been reported to Poseidon.
 - **A device that misbehaves on its first connection** (not found, refused,
   or running slowly) usually just needs unplugging and plugging in again.
 - **Duplicate drive numbers after eject or media change** (`UCD0`, `UCD1`...)

@@ -91,6 +91,21 @@ low-speed signalling. Since audio now works behind a high-speed hub too, that
 is the kind of hub to use for a sound card plus keyboard and mouse.
 
 
+## Devices behind a hub are checked at most every 8ms
+
+Low- and full-speed devices behind a high-speed hub (mice, keyboards, game
+pads, a sound card's buttons) need precisely timed transfers that the driver
+has to wait for itself, using the CPU. Devices that asked to be checked every
+1 or 2 milliseconds could take over the whole machine, so from 0.4 devices
+behind a hub are checked at most every 8 milliseconds, and the time the driver
+spends on them is capped.
+
+That is the normal rate for a mouse or keyboard, and you will not notice it.
+A device that genuinely needs faster polling (a 1000Hz gaming mouse, some
+Bluetooth dongles or USB-serial adapters) still works, but more slowly behind a
+hub. **Plug such a device straight into the Pi**, where it is not affected.
+
+
 ## The mouse can be less smooth behind a hub during heavy copying
 
 With a mouse and a USB drive behind the same hub, a long file copy can make
@@ -125,7 +140,7 @@ It depends on the exact hub chip, not just the maker. Two hubs with
 
 | hub chip (Poseidon's device list shows it) | result |
 |---|---|
-| Genesys 05E3:**0610**, named "USB2.1 Hub" | audio unusable, mouse goes wild |
+| Genesys 05E3:**0610**, named "USB2.1 Hub" | audio unusable, mouse goes wild; one user's machine froze when audio started with a sound card and a wireless mouse receiver on it |
 | Genesys 05E3:**0608**, named "USB2.0 Hub" (e.g. a D-Link 7-port hub) | works well |
 
 Poseidon 4.5 may warn that Genesys hubs are broken; as the table shows, that
@@ -135,6 +150,10 @@ Hubs that name themselves "USB2.1 Hub" are usually the USB 2 side of a **USB 3
 hub**, and these seem to be the ones that struggle. **For a sound card, mouse
 or keyboard, a plain USB 2.0 hub is the safest choice.** If a device misbehaves
 behind a hub but works plugged straight into the Pi, try a different hub.
+
+The freeze on the 0610 has not been reproduced on any other hub, so it is not
+yet understood. If it happens to you, a different hub is the fix for now, and
+a report is very welcome.
 
 (A 7-port hub showing up in Trident as two hubs is normal: it is two 4-port
 hub chips chained inside one box.)
@@ -178,6 +197,16 @@ If AHI prefs give the USB audio mode many **Channels** (CaffeineOS defaults to
 loud and clip into a harsh buzz. Set the USB mode to **1 channel** (or a few)
 and lower Volume and Gain, for example to -20 dB. Music players like AmigaAMP
 use their own channels and are not affected by this setting.
+
+
+## Not this driver: USB sticks slower under Poseidon 6.x
+
+Under Poseidon 6.x a FAT-formatted USB stick reads and writes at roughly half
+the speed it does under Poseidon 4.5. The cause is two settings Poseidon 6.x's
+`massstorage.class` gives the filesystem when it mounts a stick, and it happens
+with the Emu68 xHCI driver too (there the gain from fixing it was 2.5x). It has
+been reported to Poseidon's maintainer with a suggested fix and measurements.
+Nothing in this driver can change it.
 
 
 ## Not this driver: duplicate drive numbers on eject or media change
