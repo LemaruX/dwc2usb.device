@@ -5,14 +5,31 @@ A USB host controller driver for **Poseidon**, for Amigas accelerated by a
 Pi 3A+). It drives the Pi's own USB port, the Synopsys DWC2 controller, so
 Poseidon can use keyboards, mice, hubs, mass storage and USB audio through it.
 
-**Version 0.4, build 1605. This is a test release.** It works well on the
+**Version 0.5, build 1804. This is a test release.** It works well on the
 machines it has been tested on, but it has not seen many setups yet. Reports
 are welcome: see [Reporting a problem](#reporting-a-problem).
 
 Pi 4 / CM4 users do not need this: use the Emu68 xHCI driver instead.
 
 
-## What's new in 0.4
+## What's new in 0.5
+
+- **Faster USB drives.** Data now moves in larger pieces, and data being
+  written goes to the drive straight from the program's memory instead of
+  being copied first. Measured against 0.4 on the same machine on the same
+  day: reading up to about 50% faster and writing up to about 75% faster,
+  most for large files. (Under Poseidon 6.x, see the note about USB stick
+  speed in [Known issues](#known-issues).)
+- **Fixed a rare fault with full-speed devices that use very small data
+  packets** plugged straight into the Pi (most USB drives are not affected).
+- **Fixed occasional lost checks of devices behind a hub**, about once every
+  two seconds, caused by the USB frame counter wrapping round.
+
+Audio, mice, keyboards and hubs otherwise behave as in 0.4. Tested with
+Poseidon 4.5 and 6.2.
+
+
+## What was new in 0.4
 
 - **Smoother mice and keyboards behind a hub while audio plays.** Each device
   behind a hub now gets its own moment in the USB frame instead of competing
@@ -66,8 +83,10 @@ in 0.3.
 - **Hot-plugging**: unplugging and replugging devices, and whole hubs.
 - **USB audio** through `usbaudio.class` and AHI: directly on the Pi's port,
   behind a full-speed hub, or behind a high-speed hub.
-- **Mass storage**: about 7 MB/s write and 5.8 MB/s read with a USB 2.0
-  stick directly on the port. A USB CD-ROM has also been used.
+- **Mass storage**: with large files, up to about 12 MB/s reading and
+  11 MB/s writing with a USB 2.0 stick behind a hub (Poseidon 4.5, or 6.x
+  once its stick-speed problem is fixed - see Known issues). A USB CD-ROM
+  has also been used.
 
 ### Tested with
 
@@ -154,14 +173,17 @@ In short:
   keyboards; a device that needs faster polling works better plugged straight
   into the Pi.
 - **The mouse can be slightly less smooth behind a hub during heavy file
-  copying** to a USB drive on the same hub.
+  copying** to a USB drive on the same hub, and **busy devices behind a hub
+  slow a USB drive on the same hub** (a wireless keyboard receiver can cost
+  about a third of its speed).
 - **Some hubs lose audio or upset mice and keyboards**, while others with the
   same maker's chips work fine (for example, a Genesys "USB2.1 Hub" fails
   where a Genesys "USB2.0 Hub" works), and one user's machine froze with a
   sound card and a mouse on a Genesys "USB2.1 Hub". A plain USB 2.0 hub is
   the safest choice for a sound card, mouse or keyboard.
-- **FAT-formatted USB sticks are slower under Poseidon 6.x than under 4.5.** That is in
-  Poseidon's mounter, not this driver, and has been reported to Poseidon.
+- **USB sticks are much slower under Poseidon 6.x than under 4.5** (half the
+  speed or worse). That is in Poseidon's `massstorage.class`, not this driver,
+  and has been reported to Poseidon with a fix.
 - **A device that misbehaves on its first connection** (not found, refused,
   or running slowly) usually just needs unplugging and plugging in again.
 - **Duplicate drive numbers after eject or media change** (`UCD0`, `UCD1`...)

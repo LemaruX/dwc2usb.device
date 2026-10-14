@@ -106,13 +106,18 @@ Bluetooth dongles or USB-serial adapters) still works, but more slowly behind a
 hub. **Plug such a device straight into the Pi**, where it is not affected.
 
 
-## The mouse can be less smooth behind a hub during heavy copying
+## Mice and USB drives behind the same hub slow each other down
 
 With a mouse and a USB drive behind the same hub, a long file copy can make
 the pointer slightly less smooth. Low- and full-speed devices behind a
 high-speed hub need precisely timed transfers that the driver has to wait for,
 and heavy disk traffic on the same hub makes those waits longer. Directly on
 the port, or with no copy running, it is smooth.
+
+It works the other way too: the more such devices are behind the hub, the
+less time is left for the drive. A wireless keyboard receiver, which presents
+three devices of its own, measured about a third off a USB stick's read speed
+on the same hub. A future version should reduce this.
 
 
 ## Audio gaps for the first window drag on some systems
@@ -201,12 +206,15 @@ use their own channels and are not affected by this setting.
 
 ## Not this driver: USB sticks slower under Poseidon 6.x
 
-Under Poseidon 6.x a FAT-formatted USB stick reads and writes at roughly half
-the speed it does under Poseidon 4.5. The cause is two settings Poseidon 6.x's
-`massstorage.class` gives the filesystem when it mounts a stick, and it happens
-with the Emu68 xHCI driver too (there the gain from fixing it was 2.5x). It has
-been reported to Poseidon's maintainer with a suggested fix and measurements.
-Nothing in this driver can change it.
+Under Poseidon 6.x a FAT-formatted USB stick reads and writes at half the
+speed it does under Poseidon 4.5, or worse: with this driver a stick that
+reads at 2.5 MB/s under 4.5's settings managed under 1 MB/s through 6.2's own
+mount. The cause is two settings Poseidon 6.x's `massstorage.class` gives the
+filesystem when it mounts a stick, and it happens with the Emu68 xHCI driver
+too (there the gain from fixing it was 2.5x). It has been reported to
+Poseidon's maintainer with a suggested fix and measurements. Nothing in this
+driver can change it, and the faster transfers in 0.5 only show in full once
+it is fixed.
 
 
 ## Not this driver: duplicate drive numbers on eject or media change
