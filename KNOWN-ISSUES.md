@@ -115,9 +115,13 @@ and heavy disk traffic on the same hub makes those waits longer. Directly on
 the port, or with no copy running, it is smooth.
 
 It works the other way too: the more such devices are behind the hub, the
-less time is left for the drive. A wireless keyboard receiver, which presents
-three devices of its own, measured about a third off a USB stick's read speed
-on the same hub. A future version should reduce this.
+less time is left for the drive. Version 0.6 roughly halves the time these
+devices take, which won back most of it: with a wireless keyboard receiver
+(three devices of its own) on the same hub, a USB stick read about 40% faster
+than with 0.5, though still somewhat slower than with the receiver unplugged.
+While audio plays the driver goes back to its older, more careful way of
+checking these devices, so a mouse behind a hub can feel slightly less smooth
+during playback than without it.
 
 
 ## Audio gaps for the first window drag on some systems

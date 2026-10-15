@@ -5,14 +5,29 @@ A USB host controller driver for **Poseidon**, for Amigas accelerated by a
 Pi 3A+). It drives the Pi's own USB port, the Synopsys DWC2 controller, so
 Poseidon can use keyboards, mice, hubs, mass storage and USB audio through it.
 
-**Version 0.5, build 1804. This is a test release.** It works well on the
+**Version 0.6, build 1142. This is a test release.** It works well on the
 machines it has been tested on, but it has not seen many setups yet. Reports
 are welcome: see [Reporting a problem](#reporting-a-problem).
 
 Pi 4 / CM4 users do not need this: use the Emu68 xHCI driver instead.
 
 
-## What's new in 0.5
+## What's new in 0.6
+
+- **Devices behind a hub cost about half the CPU.** Mice, keyboards,
+  wireless receivers and a sound card's buttons behind a hub are now checked
+  together instead of one after another, which roughly halves the time the
+  driver spends on them when no audio is playing - leaving more of the machine
+  for everything else.
+- **USB drives faster when other devices share the hub.** With a wireless
+  keyboard receiver on the same hub, a USB stick read about 40% faster than
+  with 0.5.
+
+Mice, keyboards and audio otherwise behave as in 0.5. Tested with Poseidon
+4.5 and 6.2.
+
+
+## What was new in 0.5
 
 - **Faster USB drives.** Data now moves in larger pieces, and data being
   written goes to the drive straight from the program's memory instead of
@@ -173,9 +188,9 @@ In short:
   keyboards; a device that needs faster polling works better plugged straight
   into the Pi.
 - **The mouse can be slightly less smooth behind a hub during heavy file
-  copying** to a USB drive on the same hub, and **busy devices behind a hub
-  slow a USB drive on the same hub** (a wireless keyboard receiver can cost
-  about a third of its speed).
+  copying** to a USB drive on the same hub, or while audio plays, and **busy
+  devices behind a hub slow a USB drive on the same hub** (much less since
+  0.6).
 - **Some hubs lose audio or upset mice and keyboards**, while others with the
   same maker's chips work fine (for example, a Genesys "USB2.1 Hub" fails
   where a Genesys "USB2.0 Hub" works), and one user's machine froze with a
