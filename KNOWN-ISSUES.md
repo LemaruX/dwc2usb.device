@@ -5,6 +5,16 @@ driver or have not been fixed yet. If you hit something that is not listed
 here, it is worth reporting.
 
 
+## USB devices stop being detected after the clock is set
+
+**USB devices may stop being detected after the Amiga's clock is set while USB
+is running** - for example a time sync after going online on an Amiga that
+boots with no clock set (1978). A stick plugged in afterwards does not appear,
+and USB mice and keyboards may stop responding. **Use Reload in Trident after
+the clock has been set, or let the time sync run before Poseidon starts.**
+Fixed in the next release.
+
+
 ## 48kHz audio behind a high-speed hub depends on the hub
 
 At 48kHz each USB audio packet is too big to cross a high-speed hub's
@@ -179,6 +189,16 @@ nothing is corrupted, but it is not pleasant.
 
 **Use a powered hub (one with its own power supply) when you connect more than
 one or two devices**, and especially for USB sticks.
+
+
+## Unplugging a hub with devices on it - fixed in 0.7, tell us if it recurs
+
+Pulling out a hub while devices on it were in use could leave the Pi's USB
+controller unable to reach the next device, and once froze the machine.
+0.7 detects what was left behind and resets the controller before the next
+device is set up; the cause was caught and the fix tested. The freeze itself
+was only seen once, so if a hub pull ever freezes the machine or leaves a
+device unrecognised on 0.7, please reboot and send a report (Dwc2Report).
 
 
 ## A device misbehaving on its first connection

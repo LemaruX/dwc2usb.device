@@ -5,14 +5,33 @@ A USB host controller driver for **Poseidon**, for Amigas accelerated by a
 Pi 3A+). It drives the Pi's own USB port, the Synopsys DWC2 controller, so
 Poseidon can use keyboards, mice, hubs, mass storage and USB audio through it.
 
-**Version 0.6, build 1142. This is a test release.** It works well on the
+**Version 0.7, build 2146. This is a test release.** It works well on the
 machines it has been tested on, but it has not seen many setups yet. Reports
 are welcome: see [Reporting a problem](#reporting-a-problem).
 
 Pi 4 / CM4 users do not need this: use the Emu68 xHCI driver instead.
 
 
-## What's new in 0.6
+## What's new in 0.7
+
+- **Fixed: versions 0.4 to 0.6 stopped recognising devices from
+  17 October 2026.** Poseidon waited for ever on any newly plugged-in
+  device. Caused by a date-related timing fault - just install 0.7.
+- **Mice and keyboards behind a hub** could have stopped being checked for
+  the same reason once the first problem was out of the way; also fixed.
+- **Fixed: unplugging a hub could leave USB unresponsive.** If a hub was
+  pulled out while devices on it were being used, the next device plugged in
+  was sometimes not recognised until a reboot, and once in testing the whole
+  machine froze. The driver now notices what was left behind and resets the
+  Pi's USB controller before the next device is set up.
+- **Problem reports now record your setup automatically** - Emu68 version,
+  Pi model, Kickstart and Poseidon version - so you do not need to look them
+  up.
+
+Everything else behaves as in 0.6. Tested with Poseidon 6.2.
+
+
+## What was new in 0.6
 
 - **Devices behind a hub cost about half the CPU.** Mice, keyboards,
   wireless receivers and a sound card's buttons behind a hub are now checked
@@ -214,10 +233,12 @@ window telling you its name, for example `RAM:dwc2report-11-Oct-26_10.42.13.txt`
 
 Then open an issue on this repository, attach that file, and say:
 
-1. Your Pi model, Emu68 version, AmigaOS version and Poseidon version.
-2. What is plugged in and how: directly, or through which hub, and whether the
+1. What is plugged in and how: directly, or through which hub, and whether the
    hub has its own power supply.
-3. What you did, what you expected and what happened instead.
+2. What you did, what you expected and what happened instead.
+
+(The report already contains your Pi model, Emu68, Kickstart and Poseidon
+versions.)
 
 Good to know:
 
@@ -226,8 +247,8 @@ Good to know:
 - For audio problems, **quit the player completely first**. Some players keep
   the audio open while stopped, and the audio figures are only written when it
   closes.
-- From a shell, `Execute Dwc2Report` does the same. It finds Dwc2Diag in `C:`,
-  next to itself, or in the archive's `C` folder.
+- From a shell, `Execute Dwc2Report` does the same. It uses the Dwc2Diag in
+  the archive's `C` folder or next to itself first, then the one in `C:`.
 
 If you prefer to do it by hand, these Dwc2Diag modes only read and are safe
 while Poseidon is running:
@@ -236,9 +257,10 @@ while Poseidon is running:
 Dwc2Diag DEVS:USBHardware/dwc2usb.device PROBE
 Dwc2Diag DEVS:USBHardware/dwc2usb.device LOG >RAM:dwc2log.txt
 Dwc2Diag DEVS:USBHardware/dwc2usb.device TRACE >RAM:dwc2trace.txt
+Dwc2Diag DEVS:USBHardware/dwc2usb.device SYSTEM
 ```
 
-**Only use `PROBE`, `LOG` and `TRACE`.** Dwc2Diag's other modes are
+**Only use `PROBE`, `LOG`, `TRACE` and `SYSTEM`.** Dwc2Diag's other modes are
 development tests, and some of them reset the USB port or disturb Poseidon.
 
 
