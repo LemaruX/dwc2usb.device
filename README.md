@@ -5,14 +5,28 @@ A USB host controller driver for **Poseidon**, for Amigas accelerated by a
 Pi 3A+). It drives the Pi's own USB port, the Synopsys DWC2 controller, so
 Poseidon can use keyboards, mice, hubs, mass storage and USB audio through it.
 
-**Version 0.7, build 2146. This is a test release.** It works well on the
+**Version 0.8, build 1044. This is a test release.** It works well on the
 machines it has been tested on, but it has not seen many setups yet. Reports
 are welcome: see [Reporting a problem](#reporting-a-problem).
 
 Pi 4 / CM4 users do not need this: use the Emu68 xHCI driver instead.
 
 
-## What's new in 0.7
+## What's new in 0.8
+
+- **Fixed: new USB devices were sometimes not detected after the Amiga's
+  clock was set**, for example by a time sync when going online. The driver
+  now keeps time with the Pi's own timer instead of the Amiga's clock.
+- **USB drives behind a hub are a little faster** (up to about a fifth for
+  small reads), a side effect of the same change.
+- **Mice and keyboards behind a hub cope better with a briefly busy system:**
+  a poll answered too late is now simply tried again instead of being counted
+  as an error.
+
+Everything else behaves as in 0.7. Tested with Poseidon 6.2 and 4.5.
+
+
+## What was new in 0.7
 
 - **Fixed: versions 0.4 to 0.6 stopped recognising devices from
   17 October 2026.** Poseidon waited for ever on any newly plugged-in

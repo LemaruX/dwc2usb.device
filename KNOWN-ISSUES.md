@@ -5,16 +5,6 @@ driver or have not been fixed yet. If you hit something that is not listed
 here, it is worth reporting.
 
 
-## USB devices stop being detected after the clock is set
-
-**USB devices may stop being detected after the Amiga's clock is set while USB
-is running** - for example a time sync after going online on an Amiga that
-boots with no clock set (1978). A stick plugged in afterwards does not appear,
-and USB mice and keyboards may stop responding. **Use Reload in Trident after
-the clock has been set, or let the time sync run before Poseidon starts.**
-Fixed in the next release.
-
-
 ## 48kHz audio behind a high-speed hub depends on the hub
 
 At 48kHz each USB audio packet is too big to cross a high-speed hub's
