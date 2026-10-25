@@ -5,14 +5,31 @@ A USB host controller driver for **Poseidon**, for Amigas accelerated by a
 Pi 3A+). It drives the Pi's own USB port, the Synopsys DWC2 controller, so
 Poseidon can use keyboards, mice, hubs, mass storage and USB audio through it.
 
-**Version 0.8, build 1044. This is a test release.** It works well on the
+**Version 0.9, build 1404. This is a test release.** It works well on the
 machines it has been tested on, but it has not seen many setups yet. Reports
 are welcome: see [Reporting a problem](#reporting-a-problem).
 
 Pi 4 / CM4 users do not need this: use the Emu68 xHCI driver instead.
 
 
-## What's new in 0.8
+## What's new in 0.9
+
+- **Mice, keyboards and other slower devices behind a hub use much less
+  CPU.** The driver now times its work for them to the right moment in each
+  USB frame instead of waiting for it, and a scheduling fault that split
+  their checks into two batches a few milliseconds apart is fixed, so they
+  are also checked on time. With a wireless keyboard receiver, a mouse, a
+  sound card and a USB stick behind one hub, about a quarter more CPU is left
+  for other programs than with 0.8.
+- **USB drives behind a busy hub are a little faster** for small transfers.
+- **More tolerant of hubs that garble a reply:** a mouse or keyboard reply
+  with a data toggle error is now simply asked for again, instead of counting
+  towards Poseidon giving up on the device.
+
+Everything else behaves as in 0.8. Tested with Poseidon 6.2 and 4.5.
+
+
+## What was new in 0.8
 
 - **Fixed: new USB devices were sometimes not detected after the Amiga's
   clock was set**, for example by a time sync when going online. The driver
@@ -144,7 +161,8 @@ in 0.3.
 | Emu68 | 1.0.7 |
 | AmigaOS | 3.2 |
 | Poseidon | 4.5, 6.1 and 6.2 |
-| Devices | SanDisk Cruzer Fit, Lexar and Kingston DataTraveler 3.0 USB sticks, Logitech USB mouse, Logitech Unifying receiver (K400 keyboard), IBM USB keyboard with TrackPoint, two different USB sound cards, a USB CD-ROM, USB 2.0 hubs with Terminus (1A40:0101), 214B:7260 and Genesys (05E3:0608) chips |
+| Devices | SanDisk Cruzer Fit, Lexar and Kingston DataTraveler 3.0 USB sticks, Logitech USB mouse, Logitech Unifying receiver (K400 keyboard), IBM USB keyboard with TrackPoint, two different USB sound cards, a USB CD-ROM, USB 2.0 hubs with Terminus (1A40:0101), 214B:7260, WCH (1A86:8098) and Genesys (05E3:0608) chips |
+| Hubs found faulty | Genesys 05E3:0610 ("USB2.1 Hub") - see Known issues |
 
 The Pi 3B and 3B+ have not been tested. Their ports sit behind an onboard
 high-speed hub, which this driver supports for audio as well.
@@ -224,11 +242,11 @@ In short:
   copying** to a USB drive on the same hub, or while audio plays, and **busy
   devices behind a hub slow a USB drive on the same hub** (much less since
   0.6).
-- **Some hubs lose audio or upset mice and keyboards**, while others with the
-  same maker's chips work fine (for example, a Genesys "USB2.1 Hub" fails
-  where a Genesys "USB2.0 Hub" works), and one user's machine froze with a
-  sound card and a mouse on a Genesys "USB2.1 Hub". A plain USB 2.0 hub is
-  the safest choice for a sound card, mouse or keyboard.
+- **Hubs with the Genesys 05E3:0610 chip ("USB2.1 Hub", often inside USB 3.0
+  hubs) corrupt data from mice, keyboards and sound cards:** ghost mouse
+  clicks, a jumpy pointer, rough scratchy audio. USB sticks are fine on them.
+  A plain USB 2.0 hub, or the Pi's own port, is the safe choice for a sound
+  card, mouse or keyboard.
 - **USB sticks are much slower under Poseidon 6.x than under 4.5** (half the
   speed or worse). That is in Poseidon's `massstorage.class`, not this driver,
   and has been reported to Poseidon with a fix.
@@ -286,3 +304,7 @@ Developed with the assistance of Claude AI (Anthropic).
 
 Free to download and use. A licence will be added when the source code is
 published.
+
+If you find it useful and want to support its development:
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/M4M7CX5SO)
