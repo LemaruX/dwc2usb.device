@@ -119,6 +119,7 @@ less time is left for the drive. Version 0.6 roughly halves the time these
 devices take, which won back most of it: with a wireless keyboard receiver
 (three devices of its own) on the same hub, a USB stick read about 40% faster
 than with 0.5, though still somewhat slower than with the receiver unplugged.
+Version 0.9 roughly halves the time these devices take again.
 While audio plays the driver goes back to its older, more careful way of
 checking these devices, so a mouse behind a hub can feel slightly less smooth
 during playback than without it.
@@ -134,35 +135,44 @@ hear one or two gaps on the first drags after starting the driver, and then no
 more. Machines that never stall like this keep the normal, lower latency.
 
 
-## Some hubs lose audio, or upset mice and keyboards
+## Genesys 05E3:0610 hubs corrupt mice, keyboards and audio
 
 Sound cards, mice and keyboards are slower USB devices. Behind a high-speed hub
 their traffic goes through a part of the hub called the transaction
-translator, and some hubs' translators do not cope: the hub accepts the data
-and then fails to pass it on. Audio crackles and stutters badly (sometimes
-with crackling that carries on for a moment after you stop playback), or a
-mouse pointer suddenly races off across the screen. The driver cannot see this
-happening, so its log looks normal.
+translator. On hubs with the **Genesys Logic 05E3:0610** chip (Poseidon's
+device list names it **"USB2.1 Hub"**; it is usually the USB 2 side of a cheap
+**USB 3.0 hub**) that part is faulty, and it damages the data passing through
+it while telling the Pi everything is fine:
 
-It depends on the exact hub chip, not just the maker. Two hubs with
-**Genesys Logic** chips show both sides:
+- **Mice:** ghost clicks (the right-button menu popping up on its own), the
+  pointer jumping or racing off, and slightly jerky movement. The hub hands
+  over mouse reports with bytes missing, so movement values end up where the
+  buttons should be.
+- **Sound cards:** rough, raspy, scratchy sound, whatever is played.
+- **USB sticks and other high-speed devices are not affected** - they do not
+  go through the translator. A stick verified every byte on this hub.
 
-| hub chip (Poseidon's device list shows it) | result |
-|---|---|
-| Genesys 05E3:**0610**, named "USB2.1 Hub" | audio unusable, mouse goes wild; one user's machine froze when audio started with a sound card and a wireless mouse receiver on it |
-| Genesys 05E3:**0608**, named "USB2.0 Hub" (e.g. a D-Link 7-port hub) | works well |
+This was tested here on a real 0610 hub, and the driver's own logs show the
+damaged data arriving from the hub. The USB specification does not allow a
+hub to do this, and nothing in the damaged packets lets the driver tell them
+apart from good ones, so it cannot be fixed in the driver.
 
-Poseidon 4.5 may warn that Genesys hubs are broken; as the table shows, that
-is true of some and not of others.
+It depends on the exact chip, not the maker: a Genesys 05E3:**0608** ("USB2.0
+Hub", e.g. in a D-Link 7-port hub) works well. Hubs tested here and working
+cleanly for audio, mice and keyboards: **Terminus 1A40:0101, Genesys
+05E3:0608, WCH 1A86:8098**, and 214B:7260 (fine except possibly 48kHz audio
+- see above). Poseidon 4.5 may warn that Genesys hubs are broken; that is true
+of some and not of others.
 
-Hubs that name themselves "USB2.1 Hub" are usually the USB 2 side of a **USB 3
-hub**, and these seem to be the ones that struggle. **For a sound card, mouse
-or keyboard, a plain USB 2.0 hub is the safest choice.** If a device misbehaves
-behind a hub but works plugged straight into the Pi, try a different hub.
+**For a sound card, mouse or keyboard, use a plain USB 2.0 hub, or plug the
+device straight into the Pi.** If a device misbehaves behind a hub but works
+plugged straight into the Pi, try a different hub.
 
-The freeze on the 0610 has not been reproduced on any other hub, so it is not
-yet understood. If it happens to you, a different hub is the fix for now, and
-a report is very welcome.
+One user's machine froze when audio started with a sound card and a wireless
+keyboard/mouse receiver on a 0610 hub. The same hub chip with the same kind of
+receiver and a sound card did not freeze here, so it may depend on their
+particular sound card. If it happens to you, a different hub is the fix, and a
+report is very welcome.
 
 (A 7-port hub showing up in Trident as two hubs is normal: it is two 4-port
 hub chips chained inside one box.)
