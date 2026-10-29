@@ -191,16 +191,6 @@ nothing is corrupted, but it is not pleasant.
 one or two devices**, and especially for USB sticks.
 
 
-## Unplugging a hub with devices on it - fixed in 0.7, tell us if it recurs
-
-Pulling out a hub while devices on it were in use could leave the Pi's USB
-controller unable to reach the next device, and once froze the machine.
-0.7 detects what was left behind and resets the controller before the next
-device is set up; the cause was caught and the fix tested. The freeze itself
-was only seen once, so if a hub pull ever freezes the machine or leaves a
-device unrecognised on 0.7, please reboot and send a report (Dwc2Report).
-
-
 ## A device misbehaving on its first connection
 
 Occasionally a device fails its first connection: it is not detected, it is
@@ -239,6 +229,33 @@ too (there the gain from fixing it was 2.5x). It has been reported to
 Poseidon's maintainer with a suggested fix and measurements. Nothing in this
 driver can change it, and the faster transfers in 0.5 only show in full once
 it is fixed.
+
+
+## Not this driver: no icon for a stick plugged back in after USB > Eject
+
+After a stick has been ejected with **USB > Eject** (or Trident's Eject) and
+is plugged back in, it may not get an icon on the Workbench until Trident is
+restarted. The stick is detected and mounted normally - `Info` in a shell
+lists it, and it can be used from a shell or from Workbench's **Open volume**
+menu. It happens with other USB drivers too (it has been seen with the Emu68
+xHCI driver), so it is not caused by this driver.
+
+**Pulling the stick out without ejecting it first avoids it** - make sure
+nothing is still being written to it. Restarting Trident brings the icon back.
+
+(Before 0.10, ejecting a device plugged *straight into the Pi* also made the
+Pi's port stop recognising anything plugged in afterwards. That was this
+driver's fault, and it is fixed in 0.10.)
+
+
+## Not this driver: Workbench stops responding after ejecting a USB stick
+
+If Workbench stops reacting (icons cannot be selected, drawers do not open)
+straight after you eject a USB stick, **update the fat95 filesystem**. An old
+fat95 (3.18, from 2013) was found to leave Workbench waiting for an answer
+that never came when a stick was ejected; fat95 4.1 fixes it. The current
+version is on Aminet as `disk/misc/fat95` - install it with its own
+installer, which also adds the `ptable.library` it needs.
 
 
 ## Not this driver: duplicate drive numbers on eject or media change
