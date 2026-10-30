@@ -5,26 +5,26 @@ A USB host controller driver for **Poseidon**, for Amigas accelerated by a
 Pi 3A+). It drives the Pi's own USB port, the Synopsys DWC2 controller, so
 Poseidon can use keyboards, mice, hubs, mass storage and USB audio through it.
 
-**Version 0.10, build 1507. This is a test release.** It works well on the
+**Version 0.11, build 1235. This is a test release.** It works well on the
 machines it has been tested on, but it has not seen many setups yet. Reports
 are welcome: see [Reporting a problem](#reporting-a-problem).
 
 Pi 4 / CM4 users do not need this: use the Emu68 xHCI driver instead.
 
 
-## What's new in 0.10
+## What's new in 0.11
 
-- **Fixed: ejecting a USB device plugged straight into the Pi made the Pi's
-  port stop working.** After USB > Eject in the Workbench menu, or Eject in
-  Trident, nothing plugged into the Pi's port afterwards was recognised - not
-  the same device, not another one, not a hub - until Trident was restarted or
-  the Amiga rebooted. The driver now notices the device being pulled out, as a
-  USB hub does, and the next device is recognised normally. Devices behind a
-  hub were never affected.
+- **USB drives read about 70% faster.** Measured on the same stick and hub:
+  large files read at about 23 MB/s instead of 13.4, and small reads at about
+  15.5 MB/s instead of 9.2. Data read from a drive is now passed to programs
+  much more efficiently, which also leaves a little more CPU for other
+  programs while a drive is being read.
 
-Everything else behaves as in 0.9. Tested with Poseidon 6.2.
+Writing is unchanged (it is limited by the USB stick itself), and everything
+else behaves as in 0.10. Tested with Poseidon 6.2.
 
 The changes in earlier versions are listed in [CHANGES.md](CHANGES.md).
+
 
 ## What works
 
@@ -36,8 +36,8 @@ The changes in earlier versions are listed in [CHANGES.md](CHANGES.md).
 - **Hot-plugging**: unplugging and replugging devices, and whole hubs.
 - **USB audio** through `usbaudio.class` and AHI: directly on the Pi's port,
   behind a full-speed hub, or behind a high-speed hub.
-- **Mass storage**: with large files, up to about 12 MB/s reading and
-  11 MB/s writing with a USB 2.0 stick behind a hub (Poseidon 4.5, or 6.x
+- **Mass storage**: with large files, up to about 23 MB/s reading and
+  12 MB/s writing with a USB 2.0 stick behind a hub (Poseidon 4.5, or 6.x
   once its stick-speed problem is fixed - see Known issues). A USB CD-ROM
   has also been used.
 

@@ -227,8 +227,8 @@ mount. The cause is two settings Poseidon 6.x's `massstorage.class` gives the
 filesystem when it mounts a stick, and it happens with the Emu68 xHCI driver
 too (there the gain from fixing it was 2.5x). It has been reported to
 Poseidon's maintainer with a suggested fix and measurements. Nothing in this
-driver can change it, and the faster transfers in 0.5 only show in full once
-it is fixed.
+driver can change it, and the faster transfers of 0.5 and 0.11 only show in
+full once it is fixed.
 
 
 ## Not this driver: no icon for a stick plugged back in after USB > Eject

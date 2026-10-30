@@ -4,6 +4,18 @@ What changed in each release, newest first. The README describes the current
 version; known problems are in [KNOWN-ISSUES.md](KNOWN-ISSUES.md).
 
 
+## 0.11
+
+- **USB drives read about 70% faster.** Measured on the same stick and hub:
+  large files read at about 23 MB/s instead of 13.4, and small reads at about
+  15.5 MB/s instead of 9.2. Data read from a drive is now passed to programs
+  much more efficiently, which also leaves a little more CPU for other
+  programs while a drive is being read.
+
+Writing is unchanged (it is limited by the USB stick itself), and everything
+else behaves as in 0.10. Tested with Poseidon 6.2.
+
+
 ## 0.10
 
 - **Fixed: ejecting a USB device plugged straight into the Pi made the Pi's
